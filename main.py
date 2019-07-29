@@ -1,45 +1,69 @@
-import sys
-import sleekxmpp
+import asyncio
+from argparse import ArgumentParser
+from getpass import getpass
+import logging
+from slixmpp import  ClientXMPP
+from slixmpp.exceptions import IqError, IqTimeout
 
-HOST = '@alumchat.xyz'
-PORT = 5222
+class client_xmpp(ClientXMPP):
+  def __init__(self, jid, password):
+    super().__init__(jid, password)
 
-class myBot(sleekxmpp.ClientXMPP):
+    self.add_event_handler("session_start", self.start)
+    self.add_event_handler("register", self.register)
 
-    def __init__(self, jid, password):
-        super(myBot, self).__init__(jid, password)
+  def start(self, event):
+    self.send_presence()
+    self.get_roster()
+    self.disconnect()
 
-        self.add_event_handler('sign_in', self.signin)
-        self.add_event_handler('out_message', self.out_message)
-        self.add_event_handler('message', self.message)
+  async def register(self, iq):
+    resp = self.Iq()
+    resp['type'] = 'set'
+    resp['register']['username'] = self.boundjid.user
+    resp['register']['password'] = self.password
 
-    def signin(self, event):
-        self.send_presence()
-        self.get_roster()
-    
+    try:
+      await resp.send()
+      logging.info("Account created for %s!" %self.boundjid)
+    except IqError as e:
+      logging.error("ERROR: user not created %s" % e.iq['error']['text'])
+      self.disconnect()
+    except IqTimeout:
+      loging.error("ERROR: No response")
+      self.disconnect()
 
-    def out_message(self, recipient, message):
-        self.message_info = message
-        self.recipient_msg = recipient
-        self.send_message(mto=self.recipient_msg, mbody=self.message_info)
+#MAIN
+if __name__ == "__main__":
+  parser = ArgumentParser()
 
-    
-    def message(self, message):
-        print(message)
-        message.reply("Hey you").send()
+  parser.add_argument("-q", "--quiet", help="set logging to ERROR",
+                        action="store_const", dest="loglevel",
+                        const=logging.ERROR, default=logging.INFO)
+  parser.add_argument("-d", "--debug", help="set logging to DEBUG",
+                      action="store_const", dest="loglevel",
+                      const=logging.DEBUG, default=logging.INFO)
 
-    def dissconect(self):
-        self.disconnect(wait=True)
+  parser.add_argument("-j", "--jid", dest = "jid", help = "Define JID")
+  parser.add_argument("-p", "--password", dest = "password", help = "Write down your password")
 
-if __name__ == '__main__':
-    user = input("username: ")
-    password = input("password: ")
+  args = parser.parse_args()
 
-    xmpp = myBot(user + HOST, password)
+  logging.basicConfig(level=args.loglevel,format='%(levelname)-8s %(message)s')
 
-    if xmpp.connect(address=HOST):
-        print("CONNECTED")
-        xmpp.process()
-        # xmpp.disconnect()
-    else:
-        print("Error")
+  if args.jid is None:
+    args.jid = input("Username: ") + "@alumchat.xyz"
+  if args.password is None:
+    args.password = getpass("Password: ")
+
+  xmpp = client_xmpp(args.jid, args.password)
+
+  xmpp.register_plugin('xep_0030') # Service Discovery
+  xmpp.register_plugin('xep_0004') # Data forms
+  xmpp.register_plugin('xep_0066') # Out-of-band Data
+  xmpp.register_plugin('xep_0077') # In-band Registration
+
+  xmpp.connect()
+  xmpp.process()
+
+  pass
