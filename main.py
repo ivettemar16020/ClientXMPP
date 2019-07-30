@@ -114,7 +114,12 @@ if __name__ == '__main__':
     if opts.message is None:
         opts.message = input("Message: ")
     """
+
     optmen = int(menu())
+
+    opts.jid = input("Username: ")
+    opts.password = getpass.getpass("Password: ")
+
     xmpp = EchoBot(opts.jid, opts.password, optmen)
     
     #Register plugins
@@ -130,9 +135,28 @@ if __name__ == '__main__':
     #Server connection
     #if xmpp.connect():
     if xmpp.connect(('alumchat.xyz', 5222)):
-        xmpp.process(block=True) #or false? 
-        print("Done")
-        #Second menu
+        xmpp.process(block=False) #True or false? 
+        while(1): 
+            choice = int(menu_in())
+            if(choice == 1):
+                print("Contacts: \n")
+                print(xmpp.client_roster) 
+                """
+                i = 0 
+                y = 0
+                for i in range (len(xmpp.client_roster)):
+                    print(xmpp.client_roster[i][y])
+                    i = i + 1
+                """
+            elif(choice == 2):
+                new_contact = input("username: \n")
+                xmpp.send_presence(pto = new_contact, ptype ='subscribe')
+            elif(choice == 6): 
+                print("See you later")
+                xmpp.disconnect()
+                break
+            else: 
+                print("Invalid option")
        
     else:
-        print("Unable to connect.")
+        print("Unable to connect :(")
