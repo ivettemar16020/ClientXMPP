@@ -11,18 +11,13 @@ from menu import *
 
 class EchoBot(sleekxmpp.ClientXMPP):
 
-    def __init__(self, jid, password, optmen):
+    def __init__(self, jid, password):
 
         sleekxmpp.ClientXMPP.__init__(self, jid, password)
-        #Evento de start
-        print("The option is: ", optmen)
-        if(optmen == 1): 
-          self.add_event_handler("session_start", self.start)
-          self.add_event_handler("register", self.register)
-        elif(optmen == 2):
-          self.add_event_handler("session_start", self.start)
-          self.add_event_handler("message", self.message)
-  
+ 
+        self.add_event_handler("session_start", self.start, threaded=True)
+        self.add_event_handler("message", self.message)
+        self.add_event_handler("register", self.register, threaded=True)
 
     #Process event: session_start
     def start(self, event):
@@ -32,8 +27,9 @@ class EchoBot(sleekxmpp.ClientXMPP):
 
     #Receive message
     def message(self, msg):
-        if msg['type'] in ('chat', 'normal'):
-            print ("%(body)s" % msg)
+        if msg['type'] in ('normal', 'chat'):
+            print(msg['from'])
+            print(msg['body'])
 
     def register(self, iq):
         resp = self.Iq()
@@ -71,9 +67,6 @@ class EchoBot(sleekxmpp.ClientXMPP):
         except IqTimeout:
             logging.error("No response from server.")
             self.disconnect()
-    
-    def get_friends(self):
-        print(self.client_roster)
 
     def send_files(self,jid,receiver, filename):
         stream = self['xep_0047'].open_stream(receiver)
@@ -118,7 +111,9 @@ if __name__ == '__main__':
     opts.jid = username+"@alumchat.xyz"
     opts.password = getpass.getpass("Password: ")
 
-    xmpp = EchoBot(opts.jid, opts.password, optmen)
+    xmpp = EchoBot(opts.jid, opts.password)
+    if (optmen == 2):
+        xmpp.del_event_handler("register", xmpp.register)
     
     #Register plugins
     xmpp.register_plugin('xep_0004') # Data forms
@@ -148,7 +143,8 @@ if __name__ == '__main__':
                 """
             elif(choice == 2):
                 new_contact = input("username: \n")
-                xmpp.send_presence(pto = new_contact, ptype ='subscribe')
+                friend = new_contact + "@alumchat.xyz"
+                xmpp.send_presence(pto = friend, ptype ='subscribe')
 
             elif(choice == 3): 
                 print("\n ", xmpp.client_roster, "\n") 
@@ -157,8 +153,9 @@ if __name__ == '__main__':
             elif(choice == 4): 
                 print("\nPRIVATE CHAT\n")
                 username = input("\n To: ")
-                content = input("\n Content: \n")
-                xmpp.send_message(mto=username, mbody = content, mtype = 'chat')
+                user_to = username + "@alumchat.xyz"
+                content = input("\n Content: ")
+                xmpp.send_message(mto=user_to, mbody = content, mtype = 'chat')
                 print("\n SENT \n")
 
             elif(choice == 5): 
@@ -177,7 +174,7 @@ if __name__ == '__main__':
                     elif(sh == 3):
                         show = "xa"
                     elif(sh == 4):
-                        show = "dnds"
+                        show = "dnd"
                     else: 
                         print("Please, try again")
                         flag = 0
@@ -188,7 +185,7 @@ if __name__ == '__main__':
                 have the options of: chat, away, xa, and dnd. The value 'xa' means
                 extended away and 'dnd' means do not disturb.
                 """
-                xmpp.makePresence(pfrom=xmpp.jid, pstatus=status, pshow=show)
+                xmpp.send_presence(pfrom=xmpp.jid, pstatus=status, pshow=show)
                 
             elif(choice == 7): 
                 print("\nPUBLIC CHAT\n")
