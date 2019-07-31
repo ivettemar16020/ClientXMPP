@@ -1,3 +1,4 @@
+#Import libraries
 import sys
 import logging
 import getpass
@@ -9,28 +10,32 @@ from optparse import OptionParser
 from sleekxmpp.exceptions import IqError, IqTimeout
 from menu import *
 
+#Principal Class -> USER
 class EchoBot(sleekxmpp.ClientXMPP):
 
     def __init__(self, jid, password):
 
         sleekxmpp.ClientXMPP.__init__(self, jid, password)
- 
+
+        #Event handlers
         self.add_event_handler("session_start", self.start, threaded=True)
         self.add_event_handler("message", self.message)
         self.add_event_handler("register", self.register, threaded=True)
 
     #Process event: session_start
     def start(self, event):
-        print('Session start')
+        print("\nSession start")
+        print("°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°")
         self.send_presence()
         self.get_roster()
 
     #Receive message
     def message(self, msg):
         if msg['type'] in ('normal', 'chat'):
-            print(msg['from'])
-            print(msg['body'])
+            print("\n", msg['from'], "says: ")
+            print("==> ", msg['body'],"\n")
 
+    #Register
     def register(self, iq):
         resp = self.Iq()
         resp['type'] = 'set'
@@ -49,8 +54,9 @@ class EchoBot(sleekxmpp.ClientXMPP):
 
     #Get all users and print them
     def get_users(self):
-        print(self.get_roster())
+        print(self.client_roster)
 
+    #Delete user from server
     def delete_user(self):
         resp = self.Iq()
         resp['type'] = 'set'
@@ -68,13 +74,13 @@ class EchoBot(sleekxmpp.ClientXMPP):
             logging.error("No response from server.")
             self.disconnect()
 
+    #Send files to another user
     def send_files(self,jid,receiver, filename):
         stream = self['xep_0047'].open_stream(receiver)
         with open(filename) as f:
             data = f.read()
             stream.sendall(data)
     
-
 if __name__ == '__main__':
     optp = OptionParser()
 
@@ -105,8 +111,10 @@ if __name__ == '__main__':
     logging.basicConfig(level=opts.loglevel,
                         format='%(levelname)-8s %(message)s')
 
+    #Call function menu()
     optmen = int(menu())
 
+    #Add credentials
     username = input("Username: ")  
     opts.jid = username+"@alumchat.xyz"
     opts.password = getpass.getpass("Password: ")
@@ -123,14 +131,20 @@ if __name__ == '__main__':
     xmpp.register_plugin('xep_0066') # Out-of-band Data
     xmpp.register_plugin('xep_0077') # In-band Registration
     xmpp.register_plugin('xep_0199') # Ping
-    xmpp['xep_0077'].force_registration = True
+    #xmpp['xep_0077'].force_registration = True
+
+    #authentication over an unencrypted connection
+    xmpp['feature_mechanisms'].unencrypted_plain = True
+    xmpp.ssl_version = ssl.PROTOCOL_TLS
 
     #Server connection
     #if xmpp.connect():
     if xmpp.connect(('alumchat.xyz', 5222)):
         xmpp.process(block=False) #True or false? 
+        #Principal menu
         while(1): 
             choice = int(menu_in())
+            #Show all users
             if(choice == 1):
                 print("Contacts: \n")
                 print(xmpp.client_roster) 
@@ -141,15 +155,17 @@ if __name__ == '__main__':
                     print(xmpp.client_roster[i][y])
                     i = i + 1
                 """
+            #Add user 
             elif(choice == 2):
                 new_contact = input("username: \n")
                 friend = new_contact + "@alumchat.xyz"
                 xmpp.send_presence(pto = friend, ptype ='subscribe')
 
+            #Show details from an specific user
             elif(choice == 3): 
                 print("\n ", xmpp.client_roster, "\n") 
-                break
 
+            #Direct message
             elif(choice == 4): 
                 print("\nPRIVATE CHAT\n")
                 username = input("\n To: ")
@@ -158,9 +174,11 @@ if __name__ == '__main__':
                 xmpp.send_message(mto=user_to, mbody = content, mtype = 'chat')
                 print("\n SENT \n")
 
+            #Join a room
             elif(choice == 5): 
                 pass
 
+            #Send presence message and change status
             elif(choice == 6):
                 status = input("Status: ")
                 flag = 0
@@ -187,27 +205,33 @@ if __name__ == '__main__':
                 """
                 xmpp.send_presence(pfrom=xmpp.jid, pstatus=status, pshow=show)
                 
+            #Public chat
             elif(choice == 7): 
                 print("\nPUBLIC CHAT\n")
                 msg_all = input("Message: ")
                 xmpp.send_message(mto='all', mbody=msg_all, mtype='groupchat')
                 print("\n SENT \n")
 
+            #Send file
             elif(choice == 8): 
                 pass
 
+            #Exit
             elif(choice == 9): 
                 print("See you later")
                 xmpp.disconnect()
                 break
 
+            #Delete account
             elif(choice == 10): 
                 xmpp.delete_user()
                 xmpp.disconnect()
                 break
 
+            #If the option is not between (1-10)
             else: 
                 print("Invalid option")
        
+    #Fail connection
     else:
         print("Unable to connect :(")

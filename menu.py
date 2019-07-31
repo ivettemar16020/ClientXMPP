@@ -1,4 +1,5 @@
 
+#First menu
 def menu():
     print("WELCOME")
     print("OPTIONS")
@@ -7,6 +8,7 @@ def menu():
     op = input("Select and option: ")
     return op
     
+#Principal
 def menu_in(): 
     print("Activities: ")
     print("1. Show all users")
@@ -22,6 +24,7 @@ def menu_in():
     op = input("Select one activity: ")
     return op
 
+#Status
 def show_menu(): 
     print("What do you wanna show? ")
     print("1. Chat")
