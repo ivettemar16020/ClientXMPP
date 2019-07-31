@@ -24,9 +24,14 @@ python main.py
 In your python environment. 
 
 
-## Deployment
+## Functionalities
 
-Add additional notes about how to deploy this on a live system
+- Private Chat
+- Add Contact
+- See details of all contacts
+- Delete account
+- Send presence
+- Public chat
 
 ## Built With
 
