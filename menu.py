@@ -15,12 +15,11 @@ def menu_in():
     print("2. Add user")
     print("3. Show contact details from user")
     print("4. Private chat")
-    print("5. Join a room")
-    print("6. Send presence message")
-    print("7. Chat with everyone")
-    print("8. Send file")
-    print("9. Exit session")
-    print("10. Delete your account")
+    print("5. Send presence message")
+    print("6. Chat with everyone")
+    print("7. Send file")
+    print("8. Exit session")
+    print("9. Delete your account")
     op = input("Select one activity: ")
     return op
 

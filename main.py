@@ -13,14 +13,19 @@ from menu import *
 #Principal Class -> USER
 class EchoBot(sleekxmpp.ClientXMPP):
 
-    def __init__(self, jid, password):
+    def __init__(self, jid, password, nick, room):
 
         sleekxmpp.ClientXMPP.__init__(self, jid, password)
+        #Nick and room
+        self.room = room
+        self.nick = nick
 
         #Event handlers
         self.add_event_handler("session_start", self.start, threaded=True)
         self.add_event_handler("message", self.message)
         self.add_event_handler("register", self.register, threaded=True)
+        self.add_event_handler("groupchat_message", self.gp_msg, threaded=True)
+        self.add_event_handler("muc::%s::got_online" % self.room, self.gp_chat, threaded=True)
 
     #Process event: session_start
     def start(self, event):
@@ -73,6 +78,17 @@ class EchoBot(sleekxmpp.ClientXMPP):
         except IqTimeout:
             logging.error("No response from server.")
             self.disconnect()
+    
+    def gp_msg(self, msg):
+            if msg['mucnick'] != self.nick and self.nick in msg['body']:
+                print ("%(body)s" % msg)
+
+    def gp_chat(self, presence):
+            if presence['muc']['nick'] != self.nick:
+                self.send_message(mto=presence['from'].bare,
+                mbody="Hello, %s %s" % (presence['muc']['role'],
+                presence['muc']['nick']),
+                mtype='groupchat')
 
     #Send files to another user
     def send_files(self,jid,receiver, filename):
@@ -104,6 +120,10 @@ if __name__ == '__main__':
                     help="JID to send the message to")
     optp.add_option("-m", "--message", dest="message",
                     help="message to send")
+    optp.add_option("-n", "--nick", dest="nick",
+                    help="MUC nickname")
+    optp.add_option("-r", "--room", dest="room",
+                    help="MUC room to join")
 
     opts, args = optp.parse_args()
 
@@ -118,8 +138,10 @@ if __name__ == '__main__':
     username = input("Username: ")  
     opts.jid = username+"@alumchat.xyz"
     opts.password = getpass.getpass("Password: ")
+    opts.nick = input("Nickname: ")
+    opts.room = input("Name of the room you want to join in: ")
 
-    xmpp = EchoBot(opts.jid, opts.password)
+    xmpp = EchoBot(opts.jid, opts.password, opts.nick, opts.room)
     if (optmen == 2):
         xmpp.del_event_handler("register", xmpp.register)
     
@@ -174,12 +196,8 @@ if __name__ == '__main__':
                 xmpp.send_message(mto=user_to, mbody = content, mtype = 'chat')
                 print("\n SENT \n")
 
-            #Join a room
-            elif(choice == 5): 
-                pass
-
             #Send presence message and change status
-            elif(choice == 6):
+            elif(choice == 5):
                 status = input("Status: ")
                 flag = 0
                 while(flag == 0):
@@ -203,27 +221,28 @@ if __name__ == '__main__':
                 have the options of: chat, away, xa, and dnd. The value 'xa' means
                 extended away and 'dnd' means do not disturb.
                 """
-                xmpp.send_presence(pfrom=xmpp.jid, pstatus=status, pshow=show)
+                xmpp.makePresence(pfrom=xmpp.jid, pstatus=status, pshow=show)
                 
             #Public chat
-            elif(choice == 7): 
+            elif(choice == 6): 
+                xmpp.plugin['xep_0045'].joinMUC(xmpp.room, xmpp.nick)
                 print("\nPUBLIC CHAT\n")
                 msg_all = input("Message: ")
                 xmpp.send_message(mto='all', mbody=msg_all, mtype='groupchat')
                 print("\n SENT \n")
 
             #Send file
-            elif(choice == 8): 
+            elif(choice == 7): 
                 pass
 
             #Exit
-            elif(choice == 9): 
+            elif(choice == 8): 
                 print("See you later")
                 xmpp.disconnect()
                 break
 
             #Delete account
-            elif(choice == 10): 
+            elif(choice == 9): 
                 xmpp.delete_user()
                 xmpp.disconnect()
                 break
