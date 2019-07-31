@@ -33,8 +33,7 @@ class EchoBot(sleekxmpp.ClientXMPP):
     #Receive message
     def message(self, msg):
         if msg['type'] in ('chat', 'normal'):
-            msg.reply("Sent\n%(body)s" % msg).send()
-            print(msg)
+            print ("%(body)s" % msg)
 
     def register(self, iq):
         resp = self.Iq()
@@ -73,6 +72,15 @@ class EchoBot(sleekxmpp.ClientXMPP):
             logging.error("No response from server.")
             self.disconnect()
     
+    def get_friends(self):
+        print(self.client_roster)
+
+    def send_files(self,jid,receiver, filename):
+        stream = self['xep_0047'].open_stream(receiver)
+        with open(filename) as f:
+            data = f.read()
+            stream.sendall(data)
+    
 
 if __name__ == '__main__':
     optp = OptionParser()
@@ -104,20 +112,10 @@ if __name__ == '__main__':
     logging.basicConfig(level=opts.loglevel,
                         format='%(levelname)-8s %(message)s')
 
-    """
-    if opts.jid is None:
-        opts.jid = input("Username: ")
-    if opts.password is None:
-        opts.password = getpass.getpass("Password: ")
-    if opts.to is None:
-        opts.to = input("Send To: ")
-    if opts.message is None:
-        opts.message = input("Message: ")
-    """
-
     optmen = int(menu())
 
-    opts.jid = input("Username: ")
+    username = input("Username: ")  
+    opts.jid = username+"@alumchat.xyz"
     opts.password = getpass.getpass("Password: ")
 
     xmpp = EchoBot(opts.jid, opts.password, optmen)
@@ -151,10 +149,66 @@ if __name__ == '__main__':
             elif(choice == 2):
                 new_contact = input("username: \n")
                 xmpp.send_presence(pto = new_contact, ptype ='subscribe')
-            elif(choice == 6): 
+
+            elif(choice == 3): 
+                print("\n ", xmpp.client_roster, "\n") 
+                break
+
+            elif(choice == 4): 
+                print("\nPRIVATE CHAT\n")
+                username = input("\n To: ")
+                content = input("\n Content: \n")
+                xmpp.send_message(mto=username, mbody = content, mtype = 'chat')
+                print("\n SENT \n")
+
+            elif(choice == 5): 
+                pass
+
+            elif(choice == 6):
+                status = input("Status: ")
+                flag = 0
+                while(flag == 0):
+                    sh = int(show_menu())
+                    flag = 1
+                    if(sh == 1):
+                        show = "chat"
+                    elif(sh == 2):
+                        show = "away"
+                    elif(sh == 3):
+                        show = "xa"
+                    elif(sh == 4):
+                        show = "dnds"
+                    else: 
+                        print("Please, try again")
+                        flag = 0
+
+                """
+                self.send_presence(pstatus="i'm not around right now", pshow='xa')
+                Where pstatus controls the type of icon your IM client will show, and you
+                have the options of: chat, away, xa, and dnd. The value 'xa' means
+                extended away and 'dnd' means do not disturb.
+                """
+                xmpp.makePresence(pfrom=xmpp.jid, pstatus=status, pshow=show)
+                
+            elif(choice == 7): 
+                print("\nPUBLIC CHAT\n")
+                msg_all = input("Message: ")
+                xmpp.send_message(mto='all', mbody=msg_all, mtype='groupchat')
+                print("\n SENT \n")
+
+            elif(choice == 8): 
+                pass
+
+            elif(choice == 9): 
                 print("See you later")
                 xmpp.disconnect()
                 break
+
+            elif(choice == 10): 
+                xmpp.delete_user()
+                xmpp.disconnect()
+                break
+
             else: 
                 print("Invalid option")
        
