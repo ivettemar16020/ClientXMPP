@@ -15,14 +15,19 @@ VENV
 
 Just execute the following command: 
 
-pip install -r requirements.txt
+  pip install -r requirements.txt
 
 And run: 
 
-python main.py 
+  python main.py -q
 
 In your python environment. 
 
+### How to use
+1. When the program starts it will ask the user to select either if he wants to login or create a user. 
+2. After selecting one option, it will show up the second menu with the functionalities.
+
+NOTE: It is not necessary to add the suffix @ alumnchat.xyz in any of the username options.
 
 ## Functionalities
 
@@ -30,8 +35,9 @@ In your python environment.
 - Add Contact
 - See details of all contacts
 - Delete account
-- Send presence
+- Send presence and change status
 - Public chat
+- Send file
 
 ## Built With
 
@@ -51,4 +57,4 @@ No license
 
 ## Acknowledgments
 
-* Jorge Martinez - The one who asigned the project
+* Jorge Martinez - The one who assigned the project
