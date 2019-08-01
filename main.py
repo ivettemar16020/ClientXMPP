@@ -48,7 +48,7 @@ class EchoBot(sleekxmpp.ClientXMPP):
         resp['register']['password'] = self.password
         try:
             resp.send(now=True)
-            logging.info("Register succesfull: %s!" % self.boundjid)
+            logging.info("Succesfull register: %s!" % self.boundjid)
         except IqError as e:
             logging.error("Error: unable to register %s" %
                     e.iq['error']['text'])
@@ -91,7 +91,7 @@ class EchoBot(sleekxmpp.ClientXMPP):
                 mtype='groupchat')
 
     #Send files to another user
-    def send_files(self,jid,receiver, filename):
+    def send_files(self,receiver, filename):
         stream = self['xep_0047'].open_stream(receiver)
         with open(filename) as f:
             data = f.read()
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     opts.jid = username+"@alumchat.xyz"
     opts.password = getpass.getpass("Password: ")
     opts.nick = input("Nickname: ")
-    opts.room = input("Name of the room you want to join in: ")
+    opts.room = "alumnos@conference.alumchat.xyz"
 
     xmpp = EchoBot(opts.jid, opts.password, opts.nick, opts.room)
     if (optmen == 2):
@@ -233,7 +233,10 @@ if __name__ == '__main__':
 
             #Send file
             elif(choice == 7): 
-                pass
+                username = input("\n To: ")
+                send_to = username + "@alumchat.xyz"
+                file = input("File: ")
+                xmpp.send_files(send_to, file)
 
             #Exit
             elif(choice == 8): 
